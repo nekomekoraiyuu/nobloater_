@@ -1,6 +1,8 @@
 #!/bin/bash
 # Intialization
 # Author (Raiyuu) note: This project is still unfinished so dont complain-- xd
+# To do: Add Sh detection (For magisk delta)
+
 # Check for tsu packages
 clear
 echo -e "Checking if tsu is installed..\n"
@@ -34,7 +36,6 @@ if [ "$(which tsu)" == "" ];
 fi
 # Check for root access
 echo -e "\nChecking for root access..\n"
-sleep 1
 # Check for root
 touch ./tempfile_root
 root_chk=$(su -c rm ./tempfile_root && exit | paste -s)
@@ -45,18 +46,17 @@ if [[ "$root_chk" == *"No su"* ]];
 			exit 0
 	 elif [ "$(ls -ah | grep -o tempfile_root)" == "tempfile_root" ];
 		then
-			clear
-			echo -e "Root is present but root permissions are denied.\nPlease grant root permissions to continue."
+			echo -e "\nRoot is present but root permissions are denied.\nPlease grant root permissions to continue.\n"
 			rm ./tempfile_root
 			exit 0
 	else
 		echo -e "Root detected proceeding with the script."
 fi
 # End checking root access
-sleep 1
 clear
 echo -e ">_N0bl0ater by raiyuu\\n\n\nThe package youre looking for (fuzzy): "
-read INPUTHING
+read -e INPUTHING
+####### Main stuff #########
 # List packages
 OTHERINPUT=$(sudo cmd package list packages | grep $INPUTHING | cut -c 9-)
 # Now check if there are spaces present in the package list
@@ -67,35 +67,37 @@ OTHERINPUT_SPACE=$(($OTHERINPUT_SPACE/2))
 if [ $OTHERINPUT_SPACE -eq 1 -o $OTHERINPUT_SPACE -ge 1 ];
 	then
 		# If there are multiple packages it'll detect it
-		echo -e "> Multiple package name detected\\nPlease select one manually from the list down below using their index:"
+		echo -e packages: $OTHERINPUT
+		echo -e "\n> Multiple package name detected\\nPlease select one manually from the list down below using their index:"
 		# Make a loop to print out package name with their index thing
+		OTHERINPUT_SPACE=$(($OTHERINPUT_SPACE+1))
 		for xly in $(seq "$OTHERINPUT_SPACE")
 		do
 			echo -e $xly: $(echo $OTHERINPUT | cut -d " " -f $xly)
 		done
 		# Ask user for input to manually select a index
-		read -p "Please enter the index number: " CHOICE
+		read -rep $'\n'"Please enter the index number: " CHOICE
 		# -le flag literary could stand for less than equal or equal, imo. since it evaluates the boolean to true if uhh yk
 		if [ $CHOICE -le $OTHERINPUT_SPACE ];
 			then
 				OTHERINPUT=$(echo $OTHERINPUT | cut -d " " -f $CHOICE)
-				echo -e "Selected package: $OTHERINPUT"
+				echo -e "\nSelected package: $OTHERINPUT"
 			# now if the user inputs an index thats something out of the boundary it'll throw an error straight to their face xd
 			else 
-				echo -e "Invalid input."
+				echo -e "\nInvalid input."
 				exit 0
 			fi
 	# Or else if there is a single package
 	else
-		echo -e "> Single package name detected\nSelected package:"
+		echo -e "\n> Single package name detected\nSelected package:"
 fi
+# Print out the selected package name
 echo $OTHERINPUT
-echo "↑ Is this correct?(Y/N)"
-read CHOICE
+read -p "↑ Is this correct?(Y/N) " CHOICE
 if [ $CHOICE == "y" ];
 	then 
-		echo -e Debloating..
+		echo -e "Debloating... (Disabling the package first)"
 		sudo pm disable --user 0 $OTHERINPUT
-		echo -e Uninstalling package $OTHERINPUT:
+		echo -e "Uninstalling package $OTHERINPUT:"
 		sudo pm uninstall --user 0 $OTHERINPUT
 fi
