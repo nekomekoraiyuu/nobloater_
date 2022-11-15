@@ -1,8 +1,10 @@
 #!/bin/bash
-# Intialization
 # Author (Raiyuu) note: This project is still unfinished so dont complain-- xd
 # To do: Add Sh detection (For magisk delta)
-
+# Intialization (Setup some variables to hold values)
+READ_STATE="True" # This variable here just uhhh holds the while statement
+CHK_1="False" # First check
+CHK_2="False" # Second check
 # Check for tsu packages
 clear
 echo -e "Checking if tsu is installed..\n"
@@ -54,50 +56,84 @@ if [[ "$root_chk" == *"No su"* ]];
 fi
 # End checking root access
 clear
-echo -e ">_N0bl0ater by raiyuu\\n\n\nThe package youre looking for (fuzzy): "
-read -e INPUTHING
-####### Main stuff #########
-# List packages
-OTHERINPUT=$(sudo cmd package list packages | grep $INPUTHING | cut -c 9-)
-# Now check if there are spaces present in the package list
-OTHERINPUT_SPACE=$(echo $OTHERINPUT | grep -o " " | wc -m)
-# The package space multiplies by 2 for no reason idk why so we're gonna divide it
-OTHERINPUT_SPACE=$(($OTHERINPUT_SPACE/2))
-# Check if theres single package or multiple package name
-if [ $OTHERINPUT_SPACE -eq 1 -o $OTHERINPUT_SPACE -ge 1 ];
-	then
-		# If there are multiple packages it'll detect it
-		echo -e packages: $OTHERINPUT
-		echo -e "\n> Multiple package name detected\\nPlease select one manually from the list down below using their index:"
-		# Make a loop to print out package name with their index thing
-		OTHERINPUT_SPACE=$(($OTHERINPUT_SPACE+1))
-		for xly in $(seq "$OTHERINPUT_SPACE")
-		do
-			echo -e $xly: $(echo $OTHERINPUT | cut -d " " -f $xly)
-		done
-		# Ask user for input to manually select a index
-		read -rep $'\n'"Please enter the index number: " CHOICE
-		# -le flag literary could stand for less than equal or equal, imo. since it evaluates the boolean to true if uhh yk
-		if [ $CHOICE -le $OTHERINPUT_SPACE ];
-			then
-				OTHERINPUT=$(echo $OTHERINPUT | cut -d " " -f $CHOICE)
-				echo -e "\nSelected package: $OTHERINPUT"
-			# now if the user inputs an index thats something out of the boundary it'll throw an error straight to their face xd
-			else 
-				echo -e "\nInvalid input."
-				exit 0
+echo -e ">_N0bl0ater by raiyuu"
+# Make while loop so if the user fails to give correct input they can start from here again afterwards
+while [[ $READ_STATE == "True" ]];
+do
+# Lets reset the check values again
+CHK_1="False" # First check
+CHK_2="False" # Second check
+	# Now prompt the user for input
+	read -ep $'\n'"< The package you're looking for: " INPUTHING
+	# Check if the input is blank or not
+	if [ -z $INPUTHING ];
+		then
+			echo -e "\nThe input cannot be empty."
+		else
+			CHK_1="True"
+	fi
+	# Start check 1
+	if [[ $CHK_1 == "True" ]];
+		then
+			####### Main stuff #########
+			# List packages
+			OTHERINPUT=$(sudo cmd package list packages | grep $INPUTHING | cut -c 9-)
+			# Double check if the package really exists
+			if [[ -z $OTHERINPUT ]];
+				then
+					echo -e "\nThere are no package named" '"'"$INPUTHING"'"' "in this system,\nplease try again."
+					# If it does exist then it passes the check
+					else
+						CHK_2="True"
 			fi
-	# Or else if there is a single package
-	else
-		echo -e "\n> Single package name detected\nSelected package:"
-fi
-# Print out the selected package name
-echo $OTHERINPUT
-read -p "↑ Is this correct?(Y/N) " CHOICE
-if [ $CHOICE == "y" ];
-	then 
-		echo -e "Debloating... (Disabling the package first)"
-		sudo pm disable --user 0 $OTHERINPUT
-		echo -e "Uninstalling package $OTHERINPUT:"
-		sudo pm uninstall --user 0 $OTHERINPUT
-fi
+		# Add an if statement so the script will continue only if the previous check was successful (check 2)
+		if [[ $CHK_2 == "True" ]];
+			then
+					# Now check if there are spaces present in the package list
+					OTHERINPUT_SPACE=$(echo $OTHERINPUT | grep -o " " | wc -m)
+					# The package space multiplies by 2 for no reason idk why so we're gonna divide it
+					OTHERINPUT_SPACE=$(($OTHERINPUT_SPACE/2))
+					# Check if theres single package or multiple package name
+					if [ $OTHERINPUT_SPACE -eq 1 -o $OTHERINPUT_SPACE -ge 1 ];
+						then
+							# If there are multiple packages it'll detect it
+							echo -e packages: $OTHERINPUT
+							echo -e "\n> Multiple package name detected\\nPlease select one manually from the list down below using their index:"
+							# Make a loop to print out package name with their index thing
+							OTHERINPUT_SPACE=$(($OTHERINPUT_SPACE+1))
+							for xly in $(seq "$OTHERINPUT_SPACE")
+							do
+								echo -e $xly: $(echo $OTHERINPUT | cut -d " " -f $xly)
+							done
+							# Ask user for input to manually select a index
+							read -rep $'\n'"Please enter the index number: " CHOICE
+							# -le flag literary could stand for less than equal or equal, imo. since it evaluates the boolean to true if uhh yk
+							if [ $CHOICE -le $OTHERINPUT_SPACE ];
+								then
+									OTHERINPUT=$(echo $OTHERINPUT | cut -d " " -f $CHOICE)
+									echo -e "\nSelected package: $OTHERINPUT"
+								# now if the user inputs an index thats something out of the boundary it'll throw an error straight to their face xd
+								else 
+									echo -e "\nInvalid input."
+									exit 0
+								fi
+						# Or else if there is a single package
+						else
+							echo -e "\n> Single package name detected\nSelected package:"
+					fi
+					# Print out the selected package name
+					echo $OTHERINPUT
+					read -ep "↑ Is this correct?(Y/N) " CHOICE
+					if [ $CHOICE == "y" ];
+						then 
+							echo -e "Debloating... (Disabling the package first)"
+							sudo pm disable --user 0 $OTHERINPUT
+							echo -e "Uninstalling package $OTHERINPUT:"
+							sudo pm uninstall --user 0 $OTHERINPUT
+					fi
+		# Done with the first check
+		fi
+	# Done with second check
+	fi
+# Done with the while thing here
+done
